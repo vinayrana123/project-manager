@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — ProjectFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --accent: #818cf8; --accent-2: #34d399;
+      --surface: #0f1117; --surface-2: #161b27; --surface-3: #1e2536;
+      --border: rgba(255,255,255,0.07); --text: #e2e8f0; --text-muted: #64748b;
+    }
+    * { box-sizing: border-box; }
+    body { font-family: 'DM Sans', sans-serif; background: var(--surface); color: var(--text); min-height: 100vh; }
+    h1,h2,h3,.font-display { font-family: 'Syne', sans-serif; }
+    .sidebar { background: var(--surface-2); border-right: 1px solid var(--border); }
+    .glass { background: rgba(30,37,54,0.6); backdrop-filter: blur(16px); border: 1px solid var(--border); }
+    .card { background: var(--surface-2); border: 1px solid var(--border); transition: all 0.2s; }
+    .card:hover { border-color: rgba(99,102,241,0.3); transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+    .nav-link { transition: all 0.15s; color: var(--text-muted); }
+    .nav-link:hover, .nav-link.active { color: var(--text); background: rgba(255,255,255,0.06); }
+    .nav-link.active { color: #818cf8; background: rgba(99,102,241,0.12); }
+    .btn-primary { background: linear-gradient(135deg,#6366f1,#818cf8); transition: all 0.2s; }
+    .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    input, select { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--text); }
+    input:focus, select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    input::placeholder { color: var(--text-muted); }
+    .stat-card { background: var(--surface-2); border: 1px solid var(--border); }
+    .progress-bar { background: rgba(255,255,255,0.07); }
+    .project-card { background: var(--surface-2); border: 1px solid var(--border); transition: all 0.2s; cursor: pointer; }
+    .project-card:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-2px); box-shadow: 0 10px 40px rgba(0,0,0,0.4); }
+    .dropdown { background: var(--surface-3); border: 1px solid var(--border); }
+    @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+    .fade-in { animation: fadeIn 0.3s ease forwards; }
+    .skeleton { background: linear-gradient(90deg, var(--surface-3) 25%, rgba(255,255,255,0.04) 50%, var(--surface-3) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+    @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+    ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+    @media(max-width:768px){.sidebar-mobile{transform:translateX(-100%);transition:transform .3s;}.sidebar-mobile.open{transform:translateX(0);}}
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<!-- Mobile overlay -->
+<div id="mobile-overlay" class="fixed inset-0 bg-black/60 z-20 hidden md:hidden" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="sidebar sidebar-mobile fixed md:relative z-30 h-full w-64 flex flex-col shrink-0 overflow-y-auto">
+  <!-- Logo -->
+  <div class="p-5 border-b border-white/5">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+      </div>
+      <span class="font-display font-bold text-white">ProjectFlow</span>
+    </div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="flex-1 p-3 space-y-1">
+    <a href="dashboard.html" class="nav-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z"/></svg>
+      Dashboard
+    </a>
+    <a href="projects.html" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      Projects
+    </a>
+  </nav>
+
+  <!-- User profile -->
+  <div class="p-3 border-t border-white/5">
+    <div class="flex items-center gap-3 px-2 py-2">
+      <div id="user-avatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-xs font-bold text-white shrink-0">?</div>
+      <div class="flex-1 min-w-0">
+        <p id="user-name" class="text-sm font-medium text-white truncate">Loading...</p>
+        <p id="user-email" class="text-xs text-slate-500 truncate">...</p>
+      </div>
+      <button onclick="logout()" title="Logout" class="text-slate-500 hover:text-red-400 transition-colors p-1 rounded">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- Main content -->
+<main class="flex-1 overflow-y-auto">
+  <!-- Top bar -->
+  <header class="sticky top-0 z-10 glass border-b border-white/5 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <button class="md:hidden text-slate-400 hover:text-white" onclick="openSidebar()">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <div>
+        <h2 class="font-display text-lg font-bold text-white">Dashboard</h2>
+        <p class="text-xs text-slate-500" id="greeting">Good morning</p>
+      </div>
+    </div>
+    <button onclick="UI.showModal('create-project-modal')" 
+      class="btn-primary flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+      <span class="hidden sm:inline">New Project</span>
+    </button>
+  </header>
+
+  <div class="p-6 space-y-6 max-w-7xl mx-auto">
+    
+    <!-- Stats row -->
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="stat-card rounded-2xl p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-9 h-9 rounded-xl bg-indigo-500/15 flex items-center justify-center">
+            <svg class="w-4 h-4 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+          </div>
+        </div>
+        <div id="stat-total" class="text-3xl font-display font-bold text-white mb-1">—</div>
+        <div class="text-xs text-slate-500">Total Projects</div>
+      </div>
+      <div class="stat-card rounded-2xl p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-9 h-9 rounded-xl bg-blue-500/15 flex items-center justify-center">
+            <svg class="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+        </div>
+        <div id="stat-ongoing" class="text-3xl font-display font-bold text-white mb-1">—</div>
+        <div class="text-xs text-slate-500">In Progress</div>
+      </div>
+      <div class="stat-card rounded-2xl p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-9 h-9 rounded-xl bg-emerald-500/15 flex items-center justify-center">
+            <svg class="w-4 h-4 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+        <div id="stat-completed-tasks" class="text-3xl font-display font-bold text-white mb-1">—</div>
+        <div class="text-xs text-slate-500">Tasks Done</div>
+      </div>
+      <div class="stat-card rounded-2xl p-5">
+        <div class="flex items-start justify-between mb-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/15 flex items-center justify-center">
+            <svg class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          </div>
+        </div>
+        <div id="stat-overdue" class="text-3xl font-display font-bold text-white mb-1">—</div>
+        <div class="text-xs text-slate-500">Overdue</div>
+      </div>
+    </div>
+
+    <!-- Notification banner for deadline reminders -->
+    <div id="deadline-banner" class="hidden glass border-amber-500/30 bg-amber-500/5 rounded-2xl p-4 flex items-start gap-3">
+      <svg class="w-5 h-5 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.924-.833-2.694 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
+      <div>
+        <p id="deadline-text" class="text-sm text-amber-300 font-medium"></p>
+        <p class="text-xs text-slate-500 mt-0.5">Check your project deadlines</p>
+      </div>
+      <button class="ml-auto text-slate-500 hover:text-white" onclick="document.getElementById('deadline-banner').classList.add('hidden')">✕</button>
+    </div>
+
+    <!-- Projects section -->
+    <div>
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-display text-base font-semibold text-white">Recent Projects</h3>
+        <a href="projects.html" class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors">View all →</a>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-3 mb-5">
+        <div class="relative flex-1 min-w-48">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <input type="text" id="search-input" placeholder="Search projects…" 
+            class="w-full pl-10 pr-4 py-2 rounded-xl text-sm" oninput="debounceSearch()" />
+        </div>
+        <select id="filter-status" onchange="loadProjects()" class="px-3 py-2 rounded-xl text-sm min-w-32">
+          <option value="all">All Status</option>
+          <option value="planning">Planning</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="on-hold">On Hold</option>
+          <option value="completed">Completed</option>
+        </select>
+        <select id="sort-by" onchange="loadProjects()" class="px-3 py-2 rounded-xl text-sm min-w-36">
+          <option value="createdAt">Sort: Recent</option>
+          <option value="deadline">Sort: Deadline</option>
+          <option value="progress">Sort: Progress</option>
+          <option value="title">Sort: A–Z</option>
+        </select>
+      </div>
+
+      <!-- Projects grid -->
+      <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+        <!-- Skeleton loaders -->
+        <div class="skeleton rounded-2xl h-48"></div>
+        <div class="skeleton rounded-2xl h-48"></div>
+        <div class="skeleton rounded-2xl h-48"></div>
+      </div>
+
+      <div id="empty-state" class="hidden text-center py-16">
+        <div class="w-16 h-16 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+          <svg class="w-8 h-8 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+        </div>
+        <p class="text-slate-400 font-medium mb-1">No projects yet</p>
+        <p class="text-slate-600 text-sm mb-4">Create your first project to get started</p>
+        <button onclick="UI.showModal('create-project-modal')" class="btn-primary px-5 py-2 rounded-xl text-sm font-semibold text-white">
+          Create Project
+        </button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ─── Create Project Modal ──────────────────────────────────────────────── -->
+<div id="create-project-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="glass rounded-2xl w-full max-w-lg fade-in">
+    <div class="flex items-center justify-between p-6 border-b border-white/5">
+      <h3 class="font-display text-lg font-bold text-white">New Project</h3>
+      <button onclick="UI.hideModal('create-project-modal')" class="text-slate-500 hover:text-white transition-colors">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="create-project-form" onsubmit="handleCreateProject(event)" class="p-6 space-y-4">
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Project Title *</label>
+        <input type="text" id="new-title" required placeholder="e.g. Launch My Portfolio Website"
+          class="w-full px-4 py-2.5 rounded-xl text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+        <textarea id="new-desc" rows="3" placeholder="What is this project about?"
+          class="w-full px-4 py-2.5 rounded-xl text-sm resize-none"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Start Date *</label>
+          <input type="date" id="new-start" required class="w-full px-4 py-2.5 rounded-xl text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Deadline *</label>
+          <input type="date" id="new-deadline" required class="w-full px-4 py-2.5 rounded-xl text-sm" />
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Status</label>
+          <select id="new-status" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            <option value="planning">Planning</option>
+            <option value="ongoing">Ongoing</option>
+            <option value="on-hold">On Hold</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-400 mb-1.5">Priority</label>
+          <select id="new-priority" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+            <option value="critical">Critical</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Accent Color</label>
+        <div class="flex gap-2">
+          <input type="color" id="new-color" value="#6366f1" class="w-10 h-10 rounded-lg cursor-pointer border-0 bg-transparent p-0.5" />
+          <span class="text-xs text-slate-500 self-center">Choose a color to identify this project</span>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-400 mb-1.5">Tags (comma separated)</label>
+        <input type="text" id="new-tags" placeholder="design, frontend, api"
+          class="w-full px-4 py-2.5 rounded-xl text-sm" />
+      </div>
+      <div id="create-error" class="hidden text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2"></div>
+      <div class="flex gap-3 pt-2">
+        <button type="button" onclick="UI.hideModal('create-project-modal')"
+          class="flex-1 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-colors">
+          Cancel
+        </button>
+        <button type="submit" id="create-btn"
+          class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-semibold text-white">
+          Create Project
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2"></div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw new Error('Unauthorized');
+
+  let searchTimeout;
+  let currentProjects = [];
+
+  // ─── Init ──────────────────────────────────────────────────────────────────
+  async function init() {
+    const user = Auth.getUser();
+    if (user) {
+      document.getElementById('user-name').textContent = user.name;
+      document.getElementById('user-email').textContent = user.email;
+      document.getElementById('user-avatar').textContent = Str.initials(user.name);
+    }
+
+    const hour = new Date().getHours();
+    const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('greeting').textContent = `${greeting}, ${user?.name?.split(' ')[0] || ''}!`;
+
+    // Set default dates
+    const today = DateUtils.toInputDate(new Date());
+    document.getElementById('new-start').value = today;
+
+    await Promise.all([loadStats(), loadProjects()]);
+  }
+
+  // ─── Load Stats ────────────────────────────────────────────────────────────
+  async function loadStats() {
+    try {
+      const res = await API.Projects.stats();
+      // Guard: if the response shape is unexpected, bail gracefully
+      if (!res || !res.stats) {
+        console.warn('Stats response missing expected shape:', res);
+        return;
+      }
+      const { stats } = res;
+      document.getElementById('stat-total').textContent          = stats.totalProjects    ?? 0;
+      document.getElementById('stat-ongoing').textContent        = stats.ongoingProjects  ?? 0;
+      document.getElementById('stat-completed-tasks').textContent = stats.completedTasks  ?? 0;
+      document.getElementById('stat-overdue').textContent        = stats.overdueProjects  ?? 0;
+
+      // Deadline notification
+      if (stats.upcomingDeadlines > 0) {
+        const banner = document.getElementById('deadline-banner');
+        document.getElementById('deadline-text').textContent =
+          `⚡ ${stats.upcomingDeadlines} project${stats.upcomingDeadlines > 1 ? 's' : ''} due within the next 7 days!`;
+        banner.classList.remove('hidden');
+      }
+    } catch (err) {
+      console.error('Stats error:', err);
+      // Show a non-blocking warning — don't crash the whole dashboard
+      UI.showToast('Could not load stats: ' + err.message, 'error');
+    }
+  }
+
+  // ─── Load Projects ─────────────────────────────────────────────────────────
+  async function loadProjects() {
+    const grid  = document.getElementById('projects-grid');
+    const empty = document.getElementById('empty-state');
+
+    try {
+      const params = {
+        search: document.getElementById('search-input').value,
+        status: document.getElementById('filter-status').value,
+        sortBy: document.getElementById('sort-by').value,
+        limit: 12
+      };
+
+      const res = await API.Projects.list(params);
+      // Guard: unexpected response shape
+      if (!res || !Array.isArray(res.projects)) {
+        throw new Error('Unexpected response from server. Please try refreshing.');
+      }
+
+      const { projects } = res;
+      currentProjects = projects;
+
+      if (projects.length === 0) {
+        grid.innerHTML = '';
+        empty.classList.remove('hidden');
+        return;
+      }
+
+      empty.classList.add('hidden');
+      grid.innerHTML = projects.map(renderProjectCard).join('');
+    } catch (err) {
+      console.error('Projects error:', err);
+      grid.innerHTML = `<div class="col-span-full text-center text-red-400 text-sm py-8">
+        <p class="font-medium mb-1">Failed to load projects</p>
+        <p class="text-slate-500">${err.message}</p>
+      </div>`;
+    }
+  }
+
+  function renderProjectCard(p) {
+    const days = DateUtils.daysUntil(p.deadline);
+    const isOverdue = days !== null && days < 0 && p.status !== 'completed';
+    const deadlineColor = isOverdue ? 'text-red-400' : days <= 7 ? 'text-amber-400' : 'text-slate-500';
+
+    return `
+      <div class="project-card rounded-2xl p-5 fade-in" onclick="window.location.href='project-detail.html?id=${p._id}'">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-2.5">
+            <div class="w-3 h-3 rounded-full shrink-0" style="background:${p.color}; box-shadow: 0 0 8px ${p.color}60"></div>
+            <h4 class="font-display font-semibold text-white text-sm leading-snug">${Str.truncate(p.title, 40)}</h4>
+          </div>
+          ${UI.getStatusBadge(p.status)}
+        </div>
+        ${p.description ? `<p class="text-xs text-slate-500 mb-3 leading-relaxed">${Str.truncate(p.description, 80)}</p>` : ''}
+        
+        <div class="mb-3">
+          ${UI.renderProgress(p.progress, p.color)}
+        </div>
+
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-3">
+            ${UI.getPriorityBadge(p.priority)}
+            <span class="text-slate-600">${p.stats?.completedTasks || 0}/${p.stats?.totalTasks || 0} tasks</span>
+          </div>
+          <span class="${deadlineColor} font-medium">
+            ${isOverdue ? '⚠ ' : ''}${DateUtils.formatRelative(p.deadline)}
+          </span>
+        </div>
+
+        ${p.tags && p.tags.length ? `
+          <div class="flex flex-wrap gap-1 mt-3">
+            ${p.tags.slice(0,3).map(t => `<span class="px-2 py-0.5 rounded-md text-xs bg-white/5 text-slate-500">#${t}</span>`).join('')}
+          </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  function debounceSearch() {
+    clearTimeout(searchTimeout);
+    searchTimeout = setTimeout(loadProjects, 350);
+  }
+
+  // ─── Create Project ────────────────────────────────────────────────────────
+  async function handleCreateProject(e) {
+    e.preventDefault();
+    const btn = document.getElementById('create-btn');
+    const errEl = document.getElementById('create-error');
+    errEl.classList.add('hidden');
+    UI.setLoading(btn, true, 'Creating...');
+
+    try {
+      const tags = document.getElementById('new-tags').value
+        .split(',').map(t => t.trim()).filter(Boolean);
+
+      await API.Projects.create({
+        title: document.getElementById('new-title').value,
+        description: document.getElementById('new-desc').value,
+        startDate: document.getElementById('new-start').value,
+        deadline: document.getElementById('new-deadline').value,
+        status: document.getElementById('new-status').value,
+        priority: document.getElementById('new-priority').value,
+        color: document.getElementById('new-color').value,
+        tags
+      });
+
+      UI.hideModal('create-project-modal');
+      UI.showToast('Project created successfully!');
+      document.getElementById('create-project-form').reset();
+      await Promise.all([loadProjects(), loadStats()]);
+
+    } catch (err) {
+      errEl.textContent = err.message;
+      errEl.classList.remove('hidden');
+    } finally {
+      UI.setLoading(btn, false, 'Create Project');
+    }
+  }
+
+  function logout() {
+    Auth.clearSession();
+    window.location.href = '../index.html';
+  }
+
+  function openSidebar() {
+    document.getElementById('sidebar').classList.add('open');
+    document.getElementById('mobile-overlay').classList.remove('hidden');
+  }
+  function closeSidebar() {
+    document.getElementById('sidebar').classList.remove('open');
+    document.getElementById('mobile-overlay').classList.add('hidden');
+  }
+
+  init();
+</script>
+</body>
+</html>

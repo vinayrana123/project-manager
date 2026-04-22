@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project — ProjectFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root{--accent:#818cf8;--surface:#0f1117;--surface-2:#161b27;--surface-3:#1e2536;--border:rgba(255,255,255,0.07);--text:#e2e8f0;--muted:#64748b;}
+    *{box-sizing:border-box;} body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);min-height:100vh;}
+    h1,h2,h3,h4,.font-display{font-family:'Syne',sans-serif;}
+    .glass{background:rgba(22,27,39,0.85);backdrop-filter:blur(20px);border:1px solid var(--border);}
+    .card{background:var(--surface-2);border:1px solid var(--border);}
+    .btn-primary{background:linear-gradient(135deg,#6366f1,#818cf8);transition:all .2s;}
+    .btn-primary:hover{filter:brightness(1.1);}
+    .btn-sm{padding:.375rem .875rem;font-size:.75rem;font-weight:600;border-radius:.625rem;transition:all .2s;}
+    input,textarea,select{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);}
+    input:focus,textarea:focus,select:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.15);}
+    input::placeholder,textarea::placeholder{color:var(--muted);}
+    .tab-btn{color:var(--muted);border-bottom:2px solid transparent;padding:.5rem 1rem;font-size:.875rem;font-weight:500;transition:all .2s;}
+    .tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+    .task-item{background:rgba(255,255,255,0.03);border:1px solid var(--border);transition:all .2s;}
+    .task-item:hover{border-color:rgba(99,102,241,0.25);background:rgba(255,255,255,0.05);}
+    .task-item.completed{opacity:.55;}
+    .task-item.completed .task-title{text-decoration:line-through;color:var(--muted);}
+    .milestone-block{background:var(--surface-2);border:1px solid var(--border);border-radius:1rem;}
+    /* Timeline */
+    .timeline-track{position:relative;}
+    .timeline-track::before{content:'';position:absolute;left:1.25rem;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.07);}
+    .timeline-node{position:relative;padding-left:3.5rem;}
+    .timeline-node::before{content:'';position:absolute;left:0.875rem;top:1.25rem;width:0.75rem;height:0.75rem;border-radius:50%;border:2px solid;transform:translateX(-50%);}
+    .timeline-node.completed::before{background:#34d399;border-color:#34d399;box-shadow:0 0 8px #34d39960;}
+    .timeline-node.in-progress::before{background:#818cf8;border-color:#818cf8;box-shadow:0 0 8px #818cf860;}
+    .timeline-node.pending::before{background:transparent;border-color:#64748b;}
+    .attach-item{background:rgba(255,255,255,0.03);border:1px solid var(--border);transition:all .15s;}
+    .attach-item:hover{border-color:rgba(99,102,241,0.3);}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .fade-in{animation:fadeIn .25s ease forwards;}
+    ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+    .checkbox-custom{appearance:none;width:1rem;height:1rem;border-radius:.25rem;border:1.5px solid rgba(255,255,255,0.2);cursor:pointer;transition:all .15s;background:transparent;flex-shrink:0;}
+    .checkbox-custom:checked{background:#6366f1;border-color:#6366f1;}
+    .checkbox-custom:checked::after{content:'✓';position:absolute;color:white;font-size:.65rem;top:50%;left:50%;transform:translate(-50%,-50%);font-weight:700;}
+    .priority-dot{width:.5rem;height:.5rem;border-radius:50%;flex-shrink:0;}
+    .priority-dot.low{background:#64748b;} .priority-dot.medium{background:#60a5fa;} .priority-dot.high{background:#fbbf24;} .priority-dot.critical{background:#f87171;}
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="glass sticky top-0 z-30 border-b border-white/5 px-6 py-3.5 flex items-center gap-4">
+  <a href="projects.html" class="text-slate-400 hover:text-white transition-colors p-1 rounded-lg hover:bg-white/5">
+    <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+  </a>
+  <div class="flex-1 min-w-0">
+    <div class="flex items-center gap-3">
+      <div id="project-color-dot" class="w-3 h-3 rounded-full shrink-0"></div>
+      <h1 id="project-title" class="font-display text-lg font-bold text-white truncate">Loading…</h1>
+      <div id="project-status-badge"></div>
+    </div>
+  </div>
+  <div class="flex items-center gap-2 shrink-0">
+    <div id="project-progress-header" class="hidden md:flex items-center gap-2 text-xs text-slate-500">
+      <span id="header-progress-pct" class="font-mono font-bold text-white"></span>
+      <div class="w-24 h-1.5 bg-white/10 rounded-full overflow-hidden">
+        <div id="header-progress-bar" class="h-full rounded-full transition-all duration-500" style="width:0%"></div>
+      </div>
+    </div>
+    <button onclick="openEditProject()" class="text-slate-400 hover:text-indigo-400 transition-colors p-2 rounded-lg hover:bg-white/5">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+    </button>
+  </div>
+</header>
+
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+
+  <!-- Project meta strip -->
+  <div id="project-meta" class="card rounded-2xl p-4 mb-6 flex flex-wrap gap-4 items-center text-sm"></div>
+
+  <!-- Tabs -->
+  <div class="flex items-center gap-0 border-b border-white/5 mb-6 overflow-x-auto">
+    <button class="tab-btn active" onclick="switchTab('tasks')">Tasks & Milestones</button>
+    <button class="tab-btn" onclick="switchTab('timeline')">Timeline</button>
+    <button class="tab-btn" onclick="switchTab('attachments')">Attachments</button>
+  </div>
+
+  <!-- ══ TASKS TAB ══════════════════════════════════════════════════════════ -->
+  <div id="tab-tasks" class="fade-in">
+    <!-- Milestone section header -->
+    <div class="flex items-center justify-between mb-4">
+      <h3 class="font-display text-base font-semibold text-white">Milestones</h3>
+      <button onclick="UI.showModal('add-milestone-modal')"
+        class="btn-primary btn-sm text-white flex items-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+        Add Milestone
+      </button>
+    </div>
+
+    <div id="milestones-container" class="space-y-4 mb-8">
+      <div class="text-center py-8 text-slate-600 text-sm">Loading milestones...</div>
+    </div>
+
+    <!-- Unassigned Tasks -->
+    <div>
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-display text-base font-semibold text-white">Unassigned Tasks</h3>
+        <button onclick="openAddTask(null)"
+          class="btn-sm border border-white/10 text-slate-400 hover:text-white hover:border-white/20 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg>
+          Add Task
+        </button>
+      </div>
+      <div id="unassigned-tasks" class="space-y-2">
+        <div class="text-slate-600 text-sm py-4 text-center">No unassigned tasks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TIMELINE TAB ═══════════════════════════════════════════════════════ -->
+  <div id="tab-timeline" class="hidden fade-in">
+    <div id="timeline-container" class="timeline-track space-y-0 py-2"></div>
+    <div id="timeline-empty" class="hidden text-center py-16 text-slate-600 text-sm">
+      <p class="text-2xl mb-2">📅</p>
+      <p>No milestones to show in timeline.</p>
+      <p>Add milestones to visualize your project timeline.</p>
+    </div>
+  </div>
+
+  <!-- ══ ATTACHMENTS TAB ════════════════════════════════════════════════════ -->
+  <div id="tab-attachments" class="hidden fade-in">
+    <div class="flex items-center justify-between mb-5">
+      <h3 class="font-display text-base font-semibold text-white">Attachments</h3>
+      <div class="flex items-center gap-2">
+        <button onclick="UI.showModal('add-link-modal')"
+          class="btn-sm border border-white/10 text-slate-400 hover:text-white hover:border-white/20 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+          Add Link
+        </button>
+        <button onclick="document.getElementById('file-input').click()"
+          class="btn-primary btn-sm text-white flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+          Upload File
+        </button>
+        <input type="file" id="file-input" class="hidden" onchange="handleFileUpload(event)" />
+      </div>
+    </div>
+    <div id="attachments-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div class="text-slate-600 text-sm col-span-full text-center py-8">Loading attachments...</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODALS ─────────────────────────────────────────────────────────────── -->
+
+<!-- Add Milestone Modal -->
+<div id="add-milestone-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="glass rounded-2xl w-full max-w-md">
+    <div class="flex items-center justify-between p-6 border-b border-white/5">
+      <h3 class="font-display font-bold text-white">New Milestone</h3>
+      <button onclick="UI.hideModal('add-milestone-modal')" class="text-slate-500 hover:text-white">✕</button>
+    </div>
+    <form onsubmit="handleAddMilestone(event)" class="p-6 space-y-4">
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Title *</label>
+        <input type="text" id="ms-title" required placeholder="e.g. Design Phase" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+        <textarea id="ms-desc" rows="2" placeholder="Milestone details…" class="w-full px-4 py-2.5 rounded-xl text-sm resize-none"></textarea></div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Due Date</label>
+        <input type="date" id="ms-due" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      <div class="flex gap-3">
+        <button type="button" onclick="UI.hideModal('add-milestone-modal')" class="flex-1 py-2.5 rounded-xl text-sm border border-white/10 text-slate-400 hover:text-white transition-colors">Cancel</button>
+        <button type="submit" id="ms-btn" class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-semibold text-white">Add Milestone</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Task Modal -->
+<div id="add-task-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="glass rounded-2xl w-full max-w-md">
+    <div class="flex items-center justify-between p-6 border-b border-white/5">
+      <h3 class="font-display font-bold text-white" id="add-task-title">New Task</h3>
+      <button onclick="UI.hideModal('add-task-modal')" class="text-slate-500 hover:text-white">✕</button>
+    </div>
+    <form onsubmit="handleAddTask(event)" class="p-6 space-y-4">
+      <input type="hidden" id="task-milestone-id"/>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Task Title *</label>
+        <input type="text" id="task-title" required placeholder="e.g. Write API documentation" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Notes</label>
+        <textarea id="task-notes" rows="2" placeholder="Additional notes…" class="w-full px-4 py-2.5 rounded-xl text-sm resize-none"></textarea></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Due Date</label>
+          <input type="date" id="task-due" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Priority</label>
+          <select id="task-priority" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            <option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option>
+          </select></div>
+      </div>
+      <div class="flex gap-3">
+        <button type="button" onclick="UI.hideModal('add-task-modal')" class="flex-1 py-2.5 rounded-xl text-sm border border-white/10 text-slate-400 hover:text-white transition-colors">Cancel</button>
+        <button type="submit" id="task-btn" class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-semibold text-white">Add Task</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Project Modal -->
+<div id="edit-project-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="glass rounded-2xl w-full max-w-lg">
+    <div class="flex items-center justify-between p-6 border-b border-white/5">
+      <h3 class="font-display font-bold text-white">Edit Project</h3>
+      <button onclick="UI.hideModal('edit-project-modal')" class="text-slate-500 hover:text-white">✕</button>
+    </div>
+    <form onsubmit="handleEditProject(event)" class="p-6 space-y-4">
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Title</label>
+        <input type="text" id="ep-title" required class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+        <textarea id="ep-desc" rows="3" class="w-full px-4 py-2.5 rounded-xl text-sm resize-none"></textarea></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Start Date</label>
+          <input type="date" id="ep-start" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Deadline</label>
+          <input type="date" id="ep-deadline" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Status</label>
+          <select id="ep-status" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            <option value="planning">Planning</option><option value="ongoing">Ongoing</option>
+            <option value="on-hold">On Hold</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+          </select></div>
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Priority</label>
+          <select id="ep-priority" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option>
+          </select></div>
+      </div>
+      <div class="flex gap-3">
+        <button type="button" onclick="UI.hideModal('edit-project-modal')" class="flex-1 py-2.5 rounded-xl text-sm border border-white/10 text-slate-400 hover:text-white transition-colors">Cancel</button>
+        <button type="submit" id="ep-btn" class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-semibold text-white">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Add Link Modal -->
+<div id="add-link-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="glass rounded-2xl w-full max-w-md">
+    <div class="flex items-center justify-between p-6 border-b border-white/5">
+      <h3 class="font-display font-bold text-white">Add Link</h3>
+      <button onclick="UI.hideModal('add-link-modal')" class="text-slate-500 hover:text-white">✕</button>
+    </div>
+    <form onsubmit="handleAddLink(event)" class="p-6 space-y-4">
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">URL *</label>
+        <input type="url" id="link-url" required placeholder="https://example.com" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Title</label>
+        <input type="text" id="link-title" placeholder="Link display name" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+        <input type="text" id="link-desc" placeholder="What is this link?" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      <div class="flex gap-3">
+        <button type="button" onclick="UI.hideModal('add-link-modal')" class="flex-1 py-2.5 rounded-xl text-sm border border-white/10 text-slate-400 hover:text-white transition-colors">Cancel</button>
+        <button type="submit" id="link-btn" class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-semibold text-white">Add Link</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2"></div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw new Error('Unauthorized');
+
+  const projectId = new URLSearchParams(location.search).get('id');
+  if (!projectId) { window.location.href = 'projects.html'; }
+
+  let project = null;
+
+  // ─── Init ──────────────────────────────────────────────────────────────────
+  async function init() {
+    try {
+      const data = await API.Projects.get(projectId);
+      project = data.project;
+      renderProjectHeader();
+      renderMilestones();
+      renderTimeline();
+      renderAttachments();
+    } catch(err) {
+      UI.showToast(err.message, 'error');
+    }
+  }
+
+  // ─── Render Header ─────────────────────────────────────────────────────────
+  function renderProjectHeader() {
+    document.title = `${project.title} — ProjectFlow`;
+    document.getElementById('project-title').textContent = project.title;
+    document.getElementById('project-color-dot').style.cssText = `background:${project.color};box-shadow:0 0 8px ${project.color}50`;
+    document.getElementById('project-status-badge').innerHTML = UI.getStatusBadge(project.status);
+
+    const pct = project.progress || 0;
+    document.getElementById('header-progress-pct').textContent = pct + '%';
+    document.getElementById('header-progress-bar').style.cssText = `width:${pct}%;background:${project.color}`;
+    document.getElementById('project-progress-header').classList.remove('hidden');
+
+    const days = DateUtils.daysUntil(project.deadline);
+    const isOverdue = days !== null && days < 0 && project.status !== 'completed';
+
+    document.getElementById('project-meta').innerHTML = `
+      <div class="flex items-center gap-2 text-slate-400">
+        <svg class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+        <span class="text-xs"><span class="text-slate-500">Start:</span> ${DateUtils.format(project.startDate)}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <svg class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <span class="text-xs ${isOverdue ? 'text-red-400 font-medium' : 'text-slate-400'}">
+          <span class="text-slate-500">Due:</span> ${DateUtils.format(project.deadline)}
+          ${days !== null ? `<span class="ml-1">(${DateUtils.formatRelative(project.deadline)})</span>` : ''}
+        </span>
+      </div>
+      <div class="flex items-center gap-2 text-slate-400 text-xs">
+        ${UI.getPriorityBadge(project.priority)}
+      </div>
+      <div class="flex items-center gap-3 ml-auto text-xs text-slate-500">
+        <span class="text-white font-semibold">${project.stats?.completedTasks || 0}</span>/<span>${project.stats?.totalTasks || 0}</span> tasks
+        &nbsp;·&nbsp;
+        <span class="text-white font-semibold">${pct}%</span> complete
+      </div>
+      ${project.description ? `<p class="w-full text-xs text-slate-500 pt-2 border-t border-white/5 leading-relaxed">${project.description}</p>` : ''}
+      ${project.tags?.length ? `<div class="flex flex-wrap gap-1 w-full">${project.tags.map(t=>`<span class="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-500">#${t}</span>`).join('')}</div>` : ''}
+    `;
+  }
+
+  // ─── Render Milestones ─────────────────────────────────────────────────────
+  function renderMilestones() {
+    const container = document.getElementById('milestones-container');
+    const milestones = project.milestones || [];
+
+    if (milestones.length === 0) {
+      container.innerHTML = `
+        <div class="card rounded-2xl p-8 text-center border-dashed">
+          <p class="text-slate-500 text-sm mb-1">No milestones yet</p>
+          <p class="text-slate-600 text-xs">Break your project into phases by adding milestones</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = milestones.map(ms => `
+      <div class="milestone-block fade-in" id="milestone-${ms._id}">
+        <div class="flex items-center justify-between p-4 border-b border-white/5">
+          <div class="flex items-center gap-3 flex-1 min-w-0">
+            <div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0
+              ${ms.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : ms.status === 'in-progress' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-white/5 text-slate-500'}">
+              ${ms.status === 'completed' ? '✓' : ms.status === 'in-progress' ? '▶' : '○'}
+            </div>
+            <div class="min-w-0">
+              <h4 class="font-display font-semibold text-white text-sm">${ms.title}</h4>
+              ${ms.description ? `<p class="text-xs text-slate-500">${ms.description}</p>` : ''}
+            </div>
+          </div>
+          <div class="flex items-center gap-3 shrink-0 ml-3">
+            ${ms.dueDate ? `<span class="text-xs ${DateUtils.isOverdue(ms.dueDate) && ms.status !== 'completed' ? 'text-red-400' : 'text-slate-500'}">${DateUtils.format(ms.dueDate)}</span>` : ''}
+            <span class="text-xs font-mono text-slate-400 w-8 text-right">${ms.progress || 0}%</span>
+            <button onclick="openAddTask('${ms._id}', '${ms.title.replace(/'/g,'\\\'')}')" 
+              class="btn-sm border border-white/10 text-slate-400 hover:text-white hover:border-white/20 flex items-center gap-1">
+              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4"/></svg> Task
+            </button>
+            <button onclick="deleteMilestone('${ms._id}')" class="text-slate-600 hover:text-red-400 transition-colors p-1">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- Progress bar -->
+        <div class="px-4 py-2 bg-white/2">
+          <div class="h-1 bg-white/5 rounded-full overflow-hidden">
+            <div class="h-full rounded-full transition-all duration-700 ${ms.status === 'completed' ? 'bg-emerald-500' : 'bg-indigo-500'}" 
+                 style="width:${ms.progress||0}%"></div>
+          </div>
+        </div>
+        <!-- Tasks -->
+        <div class="p-3 space-y-2">
+          ${(ms.tasks || []).length === 0 
+            ? `<p class="text-xs text-slate-600 text-center py-3">No tasks — click "+ Task" to add one</p>`
+            : (ms.tasks || []).map(t => renderTaskItem(t)).join('')
+          }
+        </div>
+      </div>
+    `).join('');
+
+    // Render unassigned tasks
+    const unassigned = project.unassignedTasks || [];
+    const unassignedEl = document.getElementById('unassigned-tasks');
+    if (unassigned.length === 0) {
+      unassignedEl.innerHTML = `<p class="text-xs text-slate-600 text-center py-4">No unassigned tasks</p>`;
+    } else {
+      unassignedEl.innerHTML = `<div class="space-y-2">${unassigned.map(t => renderTaskItem(t)).join('')}</div>`;
+    }
+  }
+
+  function renderTaskItem(t) {
+    const priorityColors = { low: '#64748b', medium: '#60a5fa', high: '#fbbf24', critical: '#f87171' };
+    return `
+      <div class="task-item ${t.completed ? 'completed' : ''} rounded-xl px-4 py-3 flex items-center gap-3 group" id="task-${t._id}">
+        <div class="relative">
+          <input type="checkbox" class="checkbox-custom" ${t.completed ? 'checked' : ''} 
+            onchange="toggleTask('${t._id}', this)" />
+        </div>
+        <div class="flex-1 min-w-0">
+          <p class="task-title text-sm text-white leading-snug">${t.title}</p>
+          ${t.notes ? `<p class="text-xs text-slate-600 mt-0.5">${Str.truncate(t.notes, 60)}</p>` : ''}
+          ${t.dueDate ? `<p class="text-xs mt-0.5 ${DateUtils.isOverdue(t.dueDate) && !t.completed ? 'text-red-400' : 'text-slate-600'}">${DateUtils.format(t.dueDate)}</p>` : ''}
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <div class="priority-dot" style="background:${priorityColors[t.priority] || '#60a5fa'}"></div>
+          <button onclick="deleteTask('${t._id}')" 
+            class="opacity-0 group-hover:opacity-100 text-slate-600 hover:text-red-400 transition-all p-1">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── Render Timeline ───────────────────────────────────────────────────────
+  function renderTimeline() {
+    const container = document.getElementById('timeline-container');
+    const emptyEl = document.getElementById('timeline-empty');
+    const milestones = project.milestones || [];
+
+    if (milestones.length === 0) {
+      container.classList.add('hidden');
+      emptyEl.classList.remove('hidden');
+      return;
+    }
+    container.classList.remove('hidden');
+    emptyEl.classList.add('hidden');
+
+    // Sort by due date or created date
+    const sorted = [...milestones].sort((a, b) => {
+      const da = a.dueDate ? new Date(a.dueDate) : new Date(a.createdAt);
+      const db = b.dueDate ? new Date(b.dueDate) : new Date(b.createdAt);
+      return da - db;
+    });
+
+    // Project start node
+    const projectStart = `
+      <div class="timeline-node fade-in mb-6 completed">
+        <div class="card rounded-xl p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-lg bg-emerald-500/20 flex items-center justify-center text-emerald-400 text-xs">▶</div>
+            <div>
+              <p class="font-semibold text-white text-sm">Project Start</p>
+              <p class="text-xs text-slate-500">${DateUtils.format(project.startDate)}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    const milestoneNodes = sorted.map((ms, i) => {
+      const tasks = ms.tasks || [];
+      const done = tasks.filter(t => t.completed).length;
+      const total = tasks.length;
+      const isOverdue = ms.dueDate && DateUtils.isOverdue(ms.dueDate) && ms.status !== 'completed';
+
+      return `
+        <div class="timeline-node fade-in mb-6 ${ms.status}">
+          <div class="card rounded-xl p-4 hover:border-indigo-500/30 transition-colors">
+            <div class="flex items-start justify-between gap-3 mb-3">
+              <div class="flex items-center gap-3">
+                <div class="w-7 h-7 rounded-lg flex items-center justify-center text-xs shrink-0
+                  ${ms.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : ms.status === 'in-progress' ? 'bg-indigo-500/20 text-indigo-400' : 'bg-white/5 text-slate-500'}">
+                  ${ms.status === 'completed' ? '✓' : ms.status === 'in-progress' ? '↻' : `${i+1}`}
+                </div>
+                <div>
+                  <p class="font-display font-semibold text-white text-sm">${ms.title}</p>
+                  ${ms.description ? `<p class="text-xs text-slate-500 mt-0.5">${ms.description}</p>` : ''}
+                </div>
+              </div>
+              <div class="text-right shrink-0">
+                ${ms.dueDate 
+                  ? `<p class="text-xs ${isOverdue ? 'text-red-400 font-medium' : 'text-slate-500'}">${DateUtils.format(ms.dueDate)}</p>
+                     <p class="text-xs ${isOverdue ? 'text-red-400' : 'text-slate-600'}">${DateUtils.formatRelative(ms.dueDate)}</p>`
+                  : '<p class="text-xs text-slate-600">No due date</p>'
+                }
+              </div>
+            </div>
+            <!-- Progress -->
+            <div class="mb-3">
+              <div class="flex items-center justify-between text-xs mb-1">
+                <span class="text-slate-500">Progress</span>
+                <span class="text-white font-mono font-semibold">${ms.progress || 0}%</span>
+              </div>
+              <div class="h-1.5 bg-white/5 rounded-full overflow-hidden">
+                <div class="h-full rounded-full transition-all duration-700 ${ms.status === 'completed' ? 'bg-emerald-500' : 'bg-indigo-500'}"
+                     style="width:${ms.progress||0}%"></div>
+              </div>
+            </div>
+            <!-- Tasks summary -->
+            ${total > 0 ? `
+              <div class="flex flex-wrap gap-1.5 mt-3">
+                ${tasks.slice(0,6).map(t => `
+                  <span class="px-2 py-0.5 rounded text-xs ${t.completed ? 'bg-emerald-500/15 text-emerald-400 line-through opacity-60' : 'bg-white/5 text-slate-400'}">
+                    ${Str.truncate(t.title, 25)}
+                  </span>`).join('')}
+                ${total > 6 ? `<span class="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-600">+${total-6} more</span>` : ''}
+              </div>
+              <p class="text-xs text-slate-600 mt-2">${done}/${total} tasks complete</p>
+            ` : '<p class="text-xs text-slate-600">No tasks</p>'}
+          </div>
+        </div>
+      `;
+    });
+
+    // Deadline node
+    const deadlineNode = `
+      <div class="timeline-node fade-in ${project.status === 'completed' ? 'completed' : 'pending'}">
+        <div class="card rounded-xl p-4 border-dashed">
+          <div class="flex items-center gap-3">
+            <div class="w-7 h-7 rounded-lg ${project.status === 'completed' ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'} flex items-center justify-center text-xs">🏁</div>
+            <div>
+              <p class="font-semibold text-white text-sm">${project.status === 'completed' ? 'Completed! 🎉' : 'Project Deadline'}</p>
+              <p class="text-xs ${DateUtils.isOverdue(project.deadline) && project.status !== 'completed' ? 'text-red-400' : 'text-slate-500'}">${DateUtils.format(project.deadline)}</p>
+            </div>
+            <div class="ml-auto">
+              <span class="text-2xl font-display font-bold ${project.progress === 100 ? 'text-emerald-400' : 'text-white'}">${project.progress || 0}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = projectStart + milestoneNodes.join('') + deadlineNode;
+  }
+
+  // ─── Render Attachments ────────────────────────────────────────────────────
+  function renderAttachments() {
+    const container = document.getElementById('attachments-container');
+    const attachments = project.attachments || [];
+
+    if (attachments.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full text-center py-12">
+          <div class="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-3">
+            <svg class="w-7 h-7 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+          </div>
+          <p class="text-slate-400 text-sm mb-1">No attachments yet</p>
+          <p class="text-slate-600 text-xs">Upload files or add links related to this project</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = attachments.map(a => `
+      <div class="attach-item rounded-xl p-4 flex flex-col gap-2 fade-in">
+        <div class="flex items-start justify-between gap-2">
+          <div class="flex items-center gap-2 min-w-0">
+            <span class="text-xl shrink-0">${a.type === 'link' ? '🔗' : Str.fileIcon(a.mimeType)}</span>
+            <div class="min-w-0">
+              <p class="text-sm font-medium text-white truncate">${a.label || a.originalName || a.linkTitle || 'Untitled'}</p>
+              <p class="text-xs text-slate-500">${a.type === 'file' ? (a.fileSizeFormatted || '') : 'External link'}</p>
+            </div>
+          </div>
+          <button onclick="deleteAttachment('${a._id}')" class="text-slate-600 hover:text-red-400 transition-colors shrink-0 p-0.5">
+            <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+          </button>
+        </div>
+        ${a.linkDescription ? `<p class="text-xs text-slate-600">${a.linkDescription}</p>` : ''}
+        <div class="flex items-center gap-2 mt-auto pt-1">
+          ${a.type === 'link' 
+            ? `<a href="${a.url}" target="_blank" rel="noopener noreferrer"
+                class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+                Open link <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+               </a>`
+            : `<a href="http://localhost:5000/${a.filePath}" target="_blank"
+                class="text-xs text-indigo-400 hover:text-indigo-300 transition-colors flex items-center gap-1">
+                Download <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+               </a>`
+          }
+          <span class="ml-auto text-xs text-slate-600">${DateUtils.format(a.createdAt)}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ─── Tab Switching ─────────────────────────────────────────────────────────
+  function switchTab(tab) {
+    ['tasks', 'timeline', 'attachments'].forEach(t => {
+      document.getElementById(`tab-${t}`).classList.toggle('hidden', t !== tab);
+    });
+    document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+      const tabs = ['tasks', 'timeline', 'attachments'];
+      btn.classList.toggle('active', tabs[i] === tab);
+    });
+  }
+
+  // ─── Add Milestone ─────────────────────────────────────────────────────────
+  async function handleAddMilestone(e) {
+    e.preventDefault();
+    const btn = document.getElementById('ms-btn');
+    UI.setLoading(btn, true, 'Adding...');
+    try {
+      await API.Milestones.create({
+        title: document.getElementById('ms-title').value,
+        description: document.getElementById('ms-desc').value,
+        projectId,
+        dueDate: document.getElementById('ms-due').value || undefined
+      });
+      UI.hideModal('add-milestone-modal');
+      UI.showToast('Milestone added!');
+      e.target.reset();
+      await refreshProject();
+    } catch(err) { UI.showToast(err.message, 'error'); }
+    finally { UI.setLoading(btn, false, 'Add Milestone'); }
+  }
+
+  async function deleteMilestone(id) {
+    if (!confirm('Delete this milestone? Tasks will be unassigned.')) return;
+    try {
+      await API.Milestones.delete(id);
+      UI.showToast('Milestone deleted');
+      await refreshProject();
+    } catch(err) { UI.showToast(err.message, 'error'); }
+  }
+
+  // ─── Add Task ──────────────────────────────────────────────────────────────
+  function openAddTask(milestoneId, milestoneName) {
+    document.getElementById('task-milestone-id').value = milestoneId || '';
+    document.getElementById('add-task-title').textContent = milestoneId ? `New Task in "${milestoneName}"` : 'New Unassigned Task';
+    UI.showModal('add-task-modal');
+  }
+
+  async function handleAddTask(e) {
+    e.preventDefault();
+    const btn = document.getElementById('task-btn');
+    UI.setLoading(btn, true, 'Adding...');
+    const milestoneId = document.getElementById('task-milestone-id').value;
+    try {
+      await API.Tasks.create({
+        title: document.getElementById('task-title').value,
+        notes: document.getElementById('task-notes').value,
+        projectId,
+        milestoneId: milestoneId || undefined,
+        dueDate: document.getElementById('task-due').value || undefined,
+        priority: document.getElementById('task-priority').value
+      });
+      UI.hideModal('add-task-modal');
+      UI.showToast('Task added!');
+      e.target.reset();
+      await refreshProject();
+    } catch(err) { UI.showToast(err.message, 'error'); }
+    finally { UI.setLoading(btn, false, 'Add Task'); }
+  }
+
+  async function toggleTask(id, checkboxEl) {
+    try {
+      const { task } = await API.Tasks.toggle(id);
+      // Update local state optimistically — re-render after reload
+      await refreshProject();
+    } catch(err) {
+      UI.showToast(err.message, 'error');
+      checkboxEl.checked = !checkboxEl.checked; // Revert
+    }
+  }
+
+  async function deleteTask(id) {
+    try {
+      await API.Tasks.delete(id);
+      UI.showToast('Task deleted');
+      await refreshProject();
+    } catch(err) { UI.showToast(err.message, 'error'); }
+  }
+
+  // ─── Edit Project ──────────────────────────────────────────────────────────
+  function openEditProject() {
+    document.getElementById('ep-title').value = project.title;
+    document.getElementById('ep-desc').value = project.description || '';
+    document.getElementById('ep-start').value = DateUtils.toInputDate(project.startDate);
+    document.getElementById('ep-deadline').value = DateUtils.toInputDate(project.deadline);
+    document.getElementById('ep-status').value = project.status;
+    document.getElementById('ep-priority').value = project.priority;
+    UI.showModal('edit-project-modal');
+  }
+
+  async function handleEditProject(e) {
+    e.preventDefault();
+    const btn = document.getElementById('ep-btn');
+    UI.setLoading(btn, true, 'Saving...');
+    try {
+      await API.Projects.update(projectId, {
+        title: document.getElementById('ep-title').value,
+        description: document.getElementById('ep-desc').value,
+        startDate: document.getElementById('ep-start').value,
+        deadline: document.getElementById('ep-deadline').value,
+        status: document.getElementById('ep-status').value,
+        priority: document.getElementById('ep-priority').value
+      });
+      UI.hideModal('edit-project-modal');
+      UI.showToast('Project updated!');
+      await refreshProject();
+    } catch(err) { UI.showToast(err.message, 'error'); }
+    finally { UI.setLoading(btn, false, 'Save Changes'); }
+  }
+
+  // ─── Attachments ───────────────────────────────────────────────────────────
+  async function handleFileUpload(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    UI.showToast('Uploading file…', 'info');
+    try {
+      await API.Attachments.uploadFile(projectId, file);
+      UI.showToast('File uploaded!');
+      event.target.value = '';
+      await refreshProject();
+    } catch(err) { UI.showToast(err.message, 'error'); }
+  }
+
+  async function handleAddLink(e) {
+    e.preventDefault();
+    const btn = document.getElementById('link-btn');
+    UI.setLoading(btn, true, 'Adding...');
+    try {
+      await API.Attachments.addLink({
+        projectId,
+        url: document.getElementById('link-url').value,
+        linkTitle: document.getElementById('link-title').value,
+        linkDescription: document.getElementById('link-desc').value
+      });
+      UI.hideModal('add-link-modal');
+      UI.showToast('Link added!');
+      e.target.reset();
+      await refreshProject();
+    } catch(err) { UI.showToast(err.message, 'error'); }
+    finally { UI.setLoading(btn, false, 'Add Link'); }
+  }
+
+  async function deleteAttachment(id) {
+    if (!confirm('Remove this attachment?')) return;
+    try {
+      await API.Attachments.delete(id);
+      UI.showToast('Attachment removed');
+      await refreshProject();
+    } catch(err) { UI.showToast(err.message, 'error'); }
+  }
+
+  // ─── Refresh data ──────────────────────────────────────────────────────────
+  async function refreshProject() {
+    const data = await API.Projects.get(projectId);
+    project = data.project;
+    renderProjectHeader();
+    renderMilestones();
+    renderTimeline();
+    renderAttachments();
+  }
+
+  init();
+</script>
+</body>
+</html>

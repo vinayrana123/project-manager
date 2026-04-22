@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Projects — ProjectFlow</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root{--accent:#818cf8;--surface:#0f1117;--surface-2:#161b27;--surface-3:#1e2536;--border:rgba(255,255,255,0.07);--text:#e2e8f0;--text-muted:#64748b;}
+    *{box-sizing:border-box;} body{font-family:'DM Sans',sans-serif;background:var(--surface);color:var(--text);min-height:100vh;}
+    h1,h2,h3,.font-display{font-family:'Syne',sans-serif;}
+    .sidebar{background:var(--surface-2);border-right:1px solid var(--border);}
+    .glass{background:rgba(30,37,54,0.6);backdrop-filter:blur(16px);border:1px solid var(--border);}
+    .nav-link{transition:all .15s;color:var(--text-muted);}
+    .nav-link:hover,.nav-link.active{color:var(--text);background:rgba(255,255,255,0.06);}
+    .nav-link.active{color:#818cf8;background:rgba(99,102,241,0.12);}
+    .btn-primary{background:linear-gradient(135deg,#6366f1,#818cf8);transition:all .2s;}
+    .btn-primary:hover{filter:brightness(1.1);transform:translateY(-1px);}
+    input,select{background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--text);}
+    input:focus,select:focus{outline:none;border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,0.15);}
+    input::placeholder{color:var(--text-muted);}
+    .project-row{background:var(--surface-2);border:1px solid var(--border);transition:all .2s;cursor:pointer;}
+    .project-row:hover{border-color:rgba(99,102,241,0.35);background:var(--surface-3);}
+    .project-card{background:var(--surface-2);border:1px solid var(--border);transition:all .2s;cursor:pointer;}
+    .project-card:hover{border-color:rgba(99,102,241,0.35);transform:translateY(-2px);box-shadow:0 8px 30px rgba(0,0,0,0.35);}
+    .skeleton{background:linear-gradient(90deg,var(--surface-3) 25%,rgba(255,255,255,0.04) 50%,var(--surface-3) 75%);background-size:200% 100%;animation:shimmer 1.5s infinite;}
+    @keyframes shimmer{0%{background-position:200% 0}100%{background-position:-200% 0}}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+    .fade-in{animation:fadeIn .25s ease forwards;}
+    ::-webkit-scrollbar{width:4px;} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.1);border-radius:2px;}
+    @media(max-width:768px){.sidebar-mobile{transform:translateX(-100%);transition:transform .3s;}.sidebar-mobile.open{transform:translateX(0);}}
+  </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+
+<div id="mobile-overlay" class="fixed inset-0 bg-black/60 z-20 hidden md:hidden" onclick="closeSidebar()"></div>
+
+<!-- Sidebar -->
+<aside id="sidebar" class="sidebar sidebar-mobile fixed md:relative z-30 h-full w-64 flex flex-col shrink-0">
+  <div class="p-5 border-b border-white/5">
+    <div class="flex items-center gap-3">
+      <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30">
+        <svg class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+      </div>
+      <span class="font-display font-bold text-white">ProjectFlow</span>
+    </div>
+  </div>
+  <nav class="flex-1 p-3 space-y-1">
+    <a href="dashboard.html" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2H5a2 2 0 00-2 2z"/></svg>
+      Dashboard
+    </a>
+    <a href="projects.html" class="nav-link active flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium">
+      <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/></svg>
+      Projects
+    </a>
+  </nav>
+  <div class="p-3 border-t border-white/5">
+    <div class="flex items-center gap-3 px-2 py-2">
+      <div id="user-avatar" class="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center text-xs font-bold text-white shrink-0">?</div>
+      <div class="flex-1 min-w-0">
+        <p id="user-name" class="text-sm font-medium text-white truncate">Loading...</p>
+      </div>
+      <button onclick="logout()" title="Logout" class="text-slate-500 hover:text-red-400 transition-colors p-1 rounded">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- Main -->
+<main class="flex-1 overflow-y-auto">
+  <header class="sticky top-0 z-10 glass border-b border-white/5 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-4">
+      <button class="md:hidden text-slate-400 hover:text-white" onclick="openSidebar()">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+      </button>
+      <h2 class="font-display text-lg font-bold text-white">All Projects</h2>
+    </div>
+    <div class="flex items-center gap-2">
+      <!-- View toggle -->
+      <div class="hidden sm:flex items-center gap-1 p-1 bg-white/5 rounded-xl">
+        <button id="view-grid" onclick="setView('grid')" class="p-1.5 rounded-lg bg-white/10 text-white" title="Grid view">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
+        </button>
+        <button id="view-list" onclick="setView('list')" class="p-1.5 rounded-lg text-slate-400 hover:text-white" title="List view">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+        </button>
+      </div>
+      <button onclick="UI.showModal('create-project-modal')"
+        class="btn-primary flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold text-white">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+        <span class="hidden sm:inline">New Project</span>
+      </button>
+    </div>
+  </header>
+
+  <div class="p-6 max-w-7xl mx-auto">
+    <!-- Filters bar -->
+    <div class="flex flex-wrap gap-3 mb-6">
+      <div class="relative flex-1 min-w-52">
+        <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+        <input type="text" id="search-input" placeholder="Search by title, description, or tag…"
+          class="w-full pl-10 pr-4 py-2 rounded-xl text-sm" oninput="debounceSearch()" />
+      </div>
+      <select id="filter-status" onchange="loadProjects()" class="px-3 py-2 rounded-xl text-sm">
+        <option value="all">All Status</option>
+        <option value="planning">Planning</option>
+        <option value="ongoing">Ongoing</option>
+        <option value="on-hold">On Hold</option>
+        <option value="completed">Completed</option>
+        <option value="cancelled">Cancelled</option>
+      </select>
+      <select id="filter-priority" onchange="loadProjects()" class="px-3 py-2 rounded-xl text-sm">
+        <option value="all">All Priority</option>
+        <option value="critical">Critical</option>
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </select>
+      <select id="sort-by" onchange="loadProjects()" class="px-3 py-2 rounded-xl text-sm">
+        <option value="createdAt">Newest First</option>
+        <option value="deadline">By Deadline</option>
+        <option value="progress">By Progress</option>
+        <option value="title">A → Z</option>
+        <option value="priority">By Priority</option>
+      </select>
+    </div>
+
+    <!-- Results count -->
+    <p id="results-count" class="text-xs text-slate-500 mb-4"></p>
+
+    <!-- Grid view -->
+    <div id="grid-view" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+      <div class="skeleton rounded-2xl h-48"></div>
+      <div class="skeleton rounded-2xl h-48"></div>
+      <div class="skeleton rounded-2xl h-48"></div>
+    </div>
+
+    <!-- List view -->
+    <div id="list-view" class="hidden space-y-2"></div>
+
+    <!-- Empty state -->
+    <div id="empty-state" class="hidden text-center py-20">
+      <div class="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-10 h-10 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      </div>
+      <p class="text-slate-300 font-medium mb-1">No projects found</p>
+      <p class="text-slate-600 text-sm">Try adjusting your filters or create a new project</p>
+    </div>
+  </div>
+</main>
+
+<!-- Create Project Modal (same as dashboard) -->
+<div id="create-project-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="glass rounded-2xl w-full max-w-lg" style="animation:fadeIn .25s ease">
+    <div class="flex items-center justify-between p-6 border-b border-white/5">
+      <h3 class="font-display text-lg font-bold text-white">New Project</h3>
+      <button onclick="UI.hideModal('create-project-modal')" class="text-slate-500 hover:text-white">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="create-project-form" onsubmit="handleCreateProject(event)" class="p-6 space-y-4">
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Project Title *</label>
+        <input type="text" id="new-title" required placeholder="e.g. Build a SaaS Platform" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+        <textarea id="new-desc" rows="2" placeholder="What is this project about?" class="w-full px-4 py-2.5 rounded-xl text-sm resize-none"></textarea></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Start Date *</label>
+          <input type="date" id="new-start" required class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Deadline *</label>
+          <input type="date" id="new-deadline" required class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Status</label>
+          <select id="new-status" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            <option value="planning">Planning</option><option value="ongoing">Ongoing</option><option value="on-hold">On Hold</option>
+          </select></div>
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Priority</label>
+          <select id="new-priority" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            <option value="low">Low</option><option value="medium" selected>Medium</option><option value="high">High</option><option value="critical">Critical</option>
+          </select></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Accent Color</label>
+          <input type="color" id="new-color" value="#6366f1" class="w-full h-10 rounded-xl cursor-pointer border-0 p-1"/></div>
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Tags (comma-sep.)</label>
+          <input type="text" id="new-tags" placeholder="design, api" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      </div>
+      <div id="create-error" class="hidden text-red-400 text-xs bg-red-400/10 border border-red-400/20 rounded-lg px-3 py-2"></div>
+      <div class="flex gap-3 pt-1">
+        <button type="button" onclick="UI.hideModal('create-project-modal')" class="flex-1 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-slate-400 hover:text-white hover:border-white/20 transition-colors">Cancel</button>
+        <button type="submit" id="create-btn" class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-semibold text-white">Create Project</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Edit Project Modal -->
+<div id="edit-project-modal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div class="glass rounded-2xl w-full max-w-lg">
+    <div class="flex items-center justify-between p-6 border-b border-white/5">
+      <h3 class="font-display text-lg font-bold text-white">Edit Project</h3>
+      <button onclick="UI.hideModal('edit-project-modal')" class="text-slate-500 hover:text-white">
+        <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <form id="edit-project-form" onsubmit="handleEditProject(event)" class="p-6 space-y-4">
+      <input type="hidden" id="edit-id"/>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Title *</label>
+        <input type="text" id="edit-title" required class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Description</label>
+        <textarea id="edit-desc" rows="2" class="w-full px-4 py-2.5 rounded-xl text-sm resize-none"></textarea></div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Start Date</label>
+          <input type="date" id="edit-start" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Deadline</label>
+          <input type="date" id="edit-deadline" class="w-full px-4 py-2.5 rounded-xl text-sm"/></div>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Status</label>
+          <select id="edit-status" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            <option value="planning">Planning</option><option value="ongoing">Ongoing</option>
+            <option value="on-hold">On Hold</option><option value="completed">Completed</option><option value="cancelled">Cancelled</option>
+          </select></div>
+        <div><label class="block text-xs font-medium text-slate-400 mb-1.5">Priority</label>
+          <select id="edit-priority" class="w-full px-4 py-2.5 rounded-xl text-sm">
+            <option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option><option value="critical">Critical</option>
+          </select></div>
+      </div>
+      <div class="flex gap-3 pt-1">
+        <button type="button" onclick="UI.hideModal('edit-project-modal')" class="flex-1 py-2.5 rounded-xl text-sm font-medium border border-white/10 text-slate-400 hover:text-white transition-colors">Cancel</button>
+        <button type="submit" id="edit-btn" class="btn-primary flex-1 py-2.5 rounded-xl text-sm font-semibold text-white">Save Changes</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2"></div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/api.js"></script>
+<script>
+  if (!Auth.requireAuth()) throw new Error('Unauthorized');
+
+  let searchTimeout;
+  let currentView = 'grid';
+  let allProjects = [];
+
+  async function init() {
+    const user = Auth.getUser();
+    if (user) {
+      document.getElementById('user-name').textContent = user.name;
+      document.getElementById('user-avatar').textContent = Str.initials(user.name);
+    }
+    document.getElementById('new-start').value = DateUtils.toInputDate(new Date());
+    await loadProjects();
+  }
+
+  async function loadProjects() {
+    const gridEl = document.getElementById('grid-view');
+    const listEl = document.getElementById('list-view');
+    const emptyEl = document.getElementById('empty-state');
+    const countEl = document.getElementById('results-count');
+
+    try {
+      const params = {
+        search: document.getElementById('search-input').value,
+        status: document.getElementById('filter-status').value,
+        priority: document.getElementById('filter-priority').value,
+        sortBy: document.getElementById('sort-by').value,
+        limit: 50
+      };
+
+      const { projects, pagination } = await API.Projects.list(params);
+      allProjects = projects;
+
+      countEl.textContent = `${pagination.total} project${pagination.total !== 1 ? 's' : ''} found`;
+
+      if (projects.length === 0) {
+        gridEl.innerHTML = ''; listEl.innerHTML = '';
+        emptyEl.classList.remove('hidden'); return;
+      }
+      emptyEl.classList.add('hidden');
+
+      gridEl.innerHTML = projects.map(renderGridCard).join('');
+      listEl.innerHTML = projects.map(renderListRow).join('');
+    } catch(err) {
+      gridEl.innerHTML = `<div class="col-span-full text-center text-red-400 py-8">${err.message}</div>`;
+    }
+  }
+
+  function renderGridCard(p) {
+    const days = DateUtils.daysUntil(p.deadline);
+    const isOverdue = days !== null && days < 0 && p.status !== 'completed';
+    return `
+      <div class="project-card rounded-2xl p-5 fade-in" onclick="goToProject('${p._id}')">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex items-center gap-2">
+            <div class="w-3 h-3 rounded-full shrink-0" style="background:${p.color};box-shadow:0 0 8px ${p.color}60"></div>
+            <h4 class="font-display font-semibold text-white text-sm">${Str.truncate(p.title, 38)}</h4>
+          </div>
+          <div class="flex items-center gap-1.5" onclick="event.stopPropagation()">
+            <button onclick="openEdit(${JSON.stringify(p).replace(/"/g,'&quot;')})" class="text-slate-500 hover:text-indigo-400 transition-colors p-1 rounded">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+            </button>
+            <button onclick="deleteProject('${p._id}','${p.title}')" class="text-slate-500 hover:text-red-400 transition-colors p-1 rounded">
+              <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+        ${p.description ? `<p class="text-xs text-slate-500 mb-3">${Str.truncate(p.description, 75)}</p>` : ''}
+        <div class="mb-3">${UI.renderProgress(p.progress, p.color)}</div>
+        <div class="flex items-center justify-between text-xs">
+          <div class="flex items-center gap-2">
+            ${UI.getStatusBadge(p.status)}
+            <span class="text-slate-600">${p.stats?.completedTasks || 0}/${p.stats?.totalTasks || 0}</span>
+          </div>
+          <span class="${isOverdue ? 'text-red-400' : days <= 7 ? 'text-amber-400' : 'text-slate-500'} font-medium">
+            ${DateUtils.formatRelative(p.deadline)}
+          </span>
+        </div>
+        ${p.tags?.length ? `<div class="flex flex-wrap gap-1 mt-3">${p.tags.slice(0,3).map(t=>`<span class="px-2 py-0.5 rounded text-xs bg-white/5 text-slate-500">#${t}</span>`).join('')}</div>` : ''}
+      </div>`;
+  }
+
+  function renderListRow(p) {
+    const days = DateUtils.daysUntil(p.deadline);
+    const isOverdue = days !== null && days < 0 && p.status !== 'completed';
+    return `
+      <div class="project-row rounded-xl px-5 py-4 flex items-center gap-4 fade-in" onclick="goToProject('${p._id}')">
+        <div class="w-2 h-10 rounded-full shrink-0" style="background:${p.color}"></div>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <h4 class="font-semibold text-white text-sm">${Str.truncate(p.title, 50)}</h4>
+            ${UI.getStatusBadge(p.status)}
+            ${UI.getPriorityBadge(p.priority)}
+          </div>
+          ${p.description ? `<p class="text-xs text-slate-500">${Str.truncate(p.description, 80)}</p>` : ''}
+        </div>
+        <div class="hidden md:flex items-center gap-6 text-xs shrink-0">
+          <div class="w-32">${UI.renderProgress(p.progress, p.color)}</div>
+          <span class="text-slate-500 w-24 text-right">${DateUtils.format(p.deadline)}</span>
+          <span class="${isOverdue ? 'text-red-400' : days <= 7 ? 'text-amber-400' : 'text-slate-500'} w-20 text-right font-medium">
+            ${DateUtils.formatRelative(p.deadline)}
+          </span>
+        </div>
+        <div class="flex items-center gap-1 shrink-0" onclick="event.stopPropagation()">
+          <button onclick="openEdit(${JSON.stringify(p).replace(/"/g,'&quot;')})" class="text-slate-500 hover:text-indigo-400 transition-colors p-1.5 rounded hover:bg-white/5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+          </button>
+          <button onclick="deleteProject('${p._id}','${p.title}')" class="text-slate-500 hover:text-red-400 transition-colors p-1.5 rounded hover:bg-white/5">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          </button>
+        </div>
+      </div>`;
+  }
+
+  function setView(v) {
+    currentView = v;
+    document.getElementById('grid-view').classList.toggle('hidden', v !== 'grid');
+    document.getElementById('list-view').classList.toggle('hidden', v !== 'list');
+    document.getElementById('view-grid').className = `p-1.5 rounded-lg ${v==='grid'?'bg-white/10 text-white':'text-slate-400 hover:text-white'}`;
+    document.getElementById('view-list').className = `p-1.5 rounded-lg ${v==='list'?'bg-white/10 text-white':'text-slate-400 hover:text-white'}`;
+  }
+
+  function goToProject(id) { window.location.href = `project-detail.html?id=${id}`; }
+  function debounceSearch() { clearTimeout(searchTimeout); searchTimeout = setTimeout(loadProjects, 350); }
+
+  function openEdit(p) {
+    document.getElementById('edit-id').value = p._id;
+    document.getElementById('edit-title').value = p.title;
+    document.getElementById('edit-desc').value = p.description || '';
+    document.getElementById('edit-start').value = DateUtils.toInputDate(p.startDate);
+    document.getElementById('edit-deadline').value = DateUtils.toInputDate(p.deadline);
+    document.getElementById('edit-status').value = p.status;
+    document.getElementById('edit-priority').value = p.priority;
+    UI.showModal('edit-project-modal');
+  }
+
+  async function handleCreateProject(e) {
+    e.preventDefault();
+    const btn = document.getElementById('create-btn');
+    const errEl = document.getElementById('create-error');
+    errEl.classList.add('hidden');
+    UI.setLoading(btn, true, 'Creating...');
+    try {
+      const tags = document.getElementById('new-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+      await API.Projects.create({
+        title: document.getElementById('new-title').value,
+        description: document.getElementById('new-desc').value,
+        startDate: document.getElementById('new-start').value,
+        deadline: document.getElementById('new-deadline').value,
+        status: document.getElementById('new-status').value,
+        priority: document.getElementById('new-priority').value,
+        color: document.getElementById('new-color').value,
+        tags
+      });
+      UI.hideModal('create-project-modal');
+      UI.showToast('Project created!');
+      document.getElementById('create-project-form').reset();
+      await loadProjects();
+    } catch(err) {
+      errEl.textContent = err.message; errEl.classList.remove('hidden');
+    } finally { UI.setLoading(btn, false, 'Create Project'); }
+  }
+
+  async function handleEditProject(e) {
+    e.preventDefault();
+    const btn = document.getElementById('edit-btn');
+    UI.setLoading(btn, true, 'Saving...');
+    try {
+      await API.Projects.update(document.getElementById('edit-id').value, {
+        title: document.getElementById('edit-title').value,
+        description: document.getElementById('edit-desc').value,
+        startDate: document.getElementById('edit-start').value,
+        deadline: document.getElementById('edit-deadline').value,
+        status: document.getElementById('edit-status').value,
+        priority: document.getElementById('edit-priority').value
+      });
+      UI.hideModal('edit-project-modal');
+      UI.showToast('Project updated!');
+      await loadProjects();
+    } catch(err) {
+      UI.showToast(err.message, 'error');
+    } finally { UI.setLoading(btn, false, 'Save Changes'); }
+  }
+
+  async function deleteProject(id, title) {
+    if (!confirm(`Delete "${title}"? This will remove all milestones, tasks, and attachments.`)) return;
+    try {
+      await API.Projects.delete(id);
+      UI.showToast('Project deleted');
+      await loadProjects();
+    } catch(err) { UI.showToast(err.message, 'error'); }
+  }
+
+  function logout() { Auth.clearSession(); window.location.href = '../index.html'; }
+  function openSidebar() { document.getElementById('sidebar').classList.add('open'); document.getElementById('mobile-overlay').classList.remove('hidden'); }
+  function closeSidebar() { document.getElementById('sidebar').classList.remove('open'); document.getElementById('mobile-overlay').classList.add('hidden'); }
+
+  init();
+</script>
+</body>
+</html>

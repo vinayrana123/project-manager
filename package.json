@@ -1,0 +1,12 @@
+{
+  "name": "projectflow",
+  "version": "1.0.0",
+  "description": "Personal Project Manager Platform",
+  "scripts": {
+    "backend": "cd backend && npm run dev",
+    "install:backend": "cd backend && npm install",
+    "setup": "cd backend && npm install && cp .env.example .env && echo '✅ Setup complete! Edit backend/.env then run: npm run backend'"
+  },
+  "keywords": ["project-manager", "express", "mongodb", "jwt"],
+  "license": "MIT"
+}
