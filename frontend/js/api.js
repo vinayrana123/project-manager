@@ -11,7 +11,7 @@
  *  4. Network errors produce a clear, actionable message.
  */
 
-const API_BASE = 'http://localhost:5000/api';
+const API_BASE = 'https://project-manager-smv5.onrender.com/api';
 
 // ─── Resolve the login page regardless of serving depth ──────────────────────
 function getLoginPath() {
