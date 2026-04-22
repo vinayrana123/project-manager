@@ -27,7 +27,8 @@ app.use(cors({
     const allowed = [
       process.env.CLIENT_URL,
       'http://localhost:3000',
-      'http://127.0.0.1:3000'
+      'http://127.0.0.1:3000',
+      'https://project-manager-vinay.netlify.app'
     ].filter(Boolean);
     // Allow requests with no origin (e.g. opened as a local file, Postman)
     if (!origin || allowed.includes(origin)) return callback(null, true);
